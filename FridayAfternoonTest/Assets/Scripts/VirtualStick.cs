@@ -13,6 +13,8 @@ public class VirtualStick : MonoBehaviour {
 
     private bool isActive;
 
+    private int currentTouchIndex;
+
 	// Use this for initialization
 	private void Start () {
         this.isActive = false;
@@ -21,24 +23,51 @@ public class VirtualStick : MonoBehaviour {
             this.screenArea.y * (float)Screen.height,
             this.screenArea.width * (float)Screen.width,
             this.screenArea.height * (float)Screen.height);
+        this.currentTouchIndex = -1;
 	}
 	
 	// Update is called once per frame
 	private void Update () {
-/*#if UNITY_ANDROID
-        if(Input.touchCount == 0)
+#if UNITY_EDITOR  || UNITY_WINDOWS
+        Vector2 pointerPosition = Input.mousePosition;
+        bool stickDown = Input.GetMouseButtonDown(0);
+        bool stickRelease = Input.GetMouseButtonUp(0);
+#elif UNITY_ANDROID
+        if (Input.touchCount == 0 && this.currentTouchIndex < 0)
         {
             return;
         }
 
-        Vector2 pointerPosition = Input.GetTouch(0).position;
-        bool stickDown = Input.GetTouch(0).phase == TouchPhase.Began;
-        bool stickRelease = Input.GetTouch(0).phase == TouchPhase.Ended;
-#else*/
-        Vector2 pointerPosition = Input.mousePosition;
-        bool stickDown = Input.GetMouseButtonDown(0);
-        bool stickRelease = Input.GetMouseButtonUp(0);
-//#endif
+        Vector2 pointerPosition = Vector2.zero;
+        bool stickDown = false;
+        bool stickRelease = false;
+
+        if (this.currentTouchIndex < 0)
+        {
+            for (int touchIndex = 0; touchIndex < Input.touchCount; ++touchIndex)
+            {
+                if(Input.GetTouch(touchIndex).phase == TouchPhase.Began &&
+                    this.screenArea.Contains(Input.GetTouch(touchIndex).position))
+                {
+                    this.currentTouchIndex = touchIndex;
+                    stickDown = true;
+                    pointerPosition = Input.GetTouch(this.currentTouchIndex).position;
+                }
+            }
+        }
+        else
+        {
+            pointerPosition = Input.GetTouch(this.currentTouchIndex).position;
+        }
+        
+        // Release if the proper touch ended.
+        if((this.currentTouchIndex >= 0 && Input.GetTouch(this.currentTouchIndex).phase == TouchPhase.Ended) ||
+            Input.touchCount == 0)
+        {
+            this.currentTouchIndex = -1;
+            stickRelease = true;
+        }
+#endif
 
         if (stickDown && this.screenArea.Contains(pointerPosition))
         {
@@ -76,8 +105,17 @@ public class VirtualStick : MonoBehaviour {
             Vector2 stickStartScreenPos = new Vector2(stickStartPos.x , Screen.height - stickStartPos.y) - (stickSize * 0.5f);
             GUI.DrawTexture(new Rect(stickStartScreenPos, stickSize), this.sticktexture);
 
+#if UNITY_EDITOR || UNITY_WINDOWS
             Vector2 currentStickScreenPos = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y) - (stickSize * 0.5f);
             GUI.DrawTexture(new Rect(currentStickScreenPos, stickSize), this.sticktexture);
+#elif UNITY_ANDROID
+            if(this.currentTouchIndex >= 0)
+            {
+                Vector2 currentStickScreenPos = new Vector2(Input.GetTouch(this.currentTouchIndex).position.x, Screen.height - Input.GetTouch(this.currentTouchIndex).position.y) - (stickSize * 0.5f);
+                GUI.DrawTexture(new Rect(currentStickScreenPos, stickSize), this.sticktexture);
+            }
+#endif
+
         }
     }
 

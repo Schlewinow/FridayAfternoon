@@ -8,11 +8,14 @@ public class PlayerMovement : MonoBehaviour {
 
     private GameObject playerCamera;
     private GameObject head;
+    private VirtualStick leftStick, rightStick;
 
 	// Use this for initialization
 	void Start () {
         this.head = this.transform.Find("Head").gameObject;
         this.playerCamera = this.head.transform.Find("Main Camera").gameObject;
+        this.leftStick = this.transform.Find("LeftStick").GetComponent<VirtualStick>();
+        this.rightStick = this.transform.Find("RightStick").GetComponent<VirtualStick>();
     }
 	
 	// Update is called once per frame
@@ -22,29 +25,16 @@ public class PlayerMovement : MonoBehaviour {
             this.GetComponent<Rigidbody>().AddForce(Vector3.up * 100.0f, ForceMode.Impulse);
         }
 
-        Vector3 movement = new Vector3();
+        //Vector3 playerMovement = this.ControlsWASD();
+        Vector3 playerMovement = new Vector3(this.leftStick.GetCurrentStickDelta().x, 0.0f, this.leftStick.GetCurrentStickDelta().y);
+        Vector3 mouseMovement = this.rightStick.GetCurrentStickDelta(); // this.ControlsFreeMouse();
 
-		if(Input.GetKey(KeyCode.W))
-        {
-            movement.z = this.movementSpeed * Time.deltaTime;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            movement.z = -this.movementSpeed * Time.deltaTime;
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            movement.x = -this.movementSpeed * Time.deltaTime;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            movement.x = this.movementSpeed * Time.deltaTime;
-        }
+        // Movement in space.
+        playerMovement.x = playerMovement.x * this.movementSpeed * Time.deltaTime;
+        playerMovement.z = playerMovement.z * this.movementSpeed * Time.deltaTime;
+        this.transform.Translate(playerMovement);
 
-        this.transform.Translate(movement);
-
-        Vector3 mouseMovement = new Vector3(this.cameraSpeedX * Input.GetAxis("Mouse X"), this.cameraSpeedY * Input.GetAxis("Mouse Y"), 0.0f);
-
+        // Camera movement.
         this.transform.Rotate(Vector3.up, mouseMovement.x * cameraSpeedX * Time.deltaTime);
         this.playerCamera.transform.position = this.playerCamera.transform.position + new Vector3(0.0f, -mouseMovement.y * cameraSpeedY * Time.deltaTime, 0.0f);
 
@@ -59,5 +49,34 @@ public class PlayerMovement : MonoBehaviour {
         }
 
         this.playerCamera.transform.LookAt(this.head.transform, Vector3.up);
+    }
+
+    private Vector3 ControlsWASD()
+    {
+        Vector3 movement = new Vector3();
+
+        if (Input.GetKey(KeyCode.W))
+        {
+            movement.z += 1.0f;
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            movement.z += -1.0f;
+        }
+        if (Input.GetKey(KeyCode.A))
+        {
+            movement.x += -1.0f;
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            movement.x += 1.0f;
+        }
+
+        return movement;
+    }
+
+    private Vector3 ControlsFreeMouse()
+    {
+        return new Vector3(this.cameraSpeedX * Input.GetAxis("Mouse X"), this.cameraSpeedY * Input.GetAxis("Mouse Y"), 0.0f);
     }
 }

@@ -8,21 +8,28 @@ public class PlayerMovement : MonoBehaviour {
 
     private GameObject playerCamera;
     private GameObject head;
+    private GameObject groundChecker;
     private VirtualStick leftStick, rightStick;
+    private bool isJumpReady;
 
 	// Use this for initialization
 	void Start () {
         this.head = this.transform.Find("Head").gameObject;
         this.playerCamera = this.head.transform.Find("Main Camera").gameObject;
+        this.groundChecker = this.transform.Find("GroundChecker").gameObject;
         this.leftStick = this.transform.Find("LeftStick").GetComponent<VirtualStick>();
         this.rightStick = this.transform.Find("RightStick").GetComponent<VirtualStick>();
+        this.isJumpReady = false;
     }
 	
 	// Update is called once per frame
 	void Update () {
-        if(Input.GetKey(KeyCode.Space))
+        this.isJumpReady = this.groundChecker.GetComponent<GroundChecker>().IsTouchingGround();
+
+        if(Input.GetKeyDown(KeyCode.Space) && this.isJumpReady)
         {
-            this.GetComponent<Rigidbody>().AddForce(Vector3.up * 100.0f, ForceMode.Impulse);
+            this.GetComponent<Rigidbody>().AddForce(Vector3.up * 500.0f, ForceMode.Impulse);
+            this.isJumpReady = false;
         }
 
         Vector3 playerMovement = this.ControlsWASD();
@@ -53,6 +60,10 @@ public class PlayerMovement : MonoBehaviour {
         this.playerCamera.transform.LookAt(this.head.transform, Vector3.up);
     }
 
+    /// <summary>
+    /// Allows to control the player using WASD-keys
+    /// </summary>
+    /// <returns></returns>
     private Vector3 ControlsWASD()
     {
         Vector3 movement = new Vector3();

@@ -25,14 +25,16 @@ public class PlayerMovement : MonoBehaviour {
             this.GetComponent<Rigidbody>().AddForce(Vector3.up * 100.0f, ForceMode.Impulse);
         }
 
-        //Vector3 playerMovement = this.ControlsWASD();
-        Vector3 playerMovement = new Vector3(this.leftStick.GetCurrentStickDelta().x, 0.0f, this.leftStick.GetCurrentStickDelta().y);
-        Vector3 mouseMovement = this.rightStick.GetCurrentStickDelta(); // this.ControlsFreeMouse();
+        Vector3 playerMovement = this.ControlsWASD();
+        Vector3 mouseMovement = this.ControlsFreeMouse();
+        //Vector3 playerMovement = new Vector3(this.leftStick.GetCurrentStickDelta().x, 0.0f, this.leftStick.GetCurrentStickDelta().y);
+        //Vector3 mouseMovement = this.rightStick.GetCurrentStickDelta(); // 
 
         // Movement in space.
         playerMovement.x = playerMovement.x * this.movementSpeed * Time.deltaTime;
         playerMovement.z = playerMovement.z * this.movementSpeed * Time.deltaTime;
-        this.transform.Translate(playerMovement);
+        //this.transform.Translate(playerMovement);
+        this.GetComponent<Rigidbody>().AddRelativeForce(playerMovement, ForceMode.VelocityChange);
 
         // Camera movement.
         this.transform.Rotate(Vector3.up, mouseMovement.x * cameraSpeedX * Time.deltaTime);

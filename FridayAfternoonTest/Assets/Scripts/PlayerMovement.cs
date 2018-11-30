@@ -67,10 +67,11 @@ public class PlayerMovement : MonoBehaviour {
         //this.transform.Translate(playerMovement);
 
         Rigidbody rigidBody = this.GetComponent<Rigidbody>();
-        if (rigidBody.velocity.magnitude < this.maxMovementSpeed)
+        /*if (rigidBody.velocity.magnitude < this.maxMovementSpeed)
         {
             rigidBody.AddRelativeForce(playerMovement, ForceMode.VelocityChange);
-        }
+        }*/
+        rigidBody.velocity = this.transform.forward * playerMovement.z + this.transform.right * playerMovement.x;
 
         // Camera movement.
         this.transform.Rotate(Vector3.up, mouseMovement.x * cameraSpeedX * Time.deltaTime);

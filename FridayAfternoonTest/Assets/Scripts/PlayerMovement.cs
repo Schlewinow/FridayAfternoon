@@ -3,6 +3,7 @@
 public class PlayerMovement : MonoBehaviour {
 
     public float movementSpeed = 1.0f;
+    public float maxMovementSpeed = 10.0f;
     public float cameraSpeedX = 1.0f;
     public float cameraSpeedY = 1.0f;
 
@@ -14,17 +15,37 @@ public class PlayerMovement : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        this.head = this.transform.Find("Head").gameObject;
-        this.playerCamera = this.head.transform.Find("Main Camera").gameObject;
-        this.groundChecker = this.transform.Find("GroundChecker").gameObject;
+        this.head = this.FindGameObject(this.gameObject, "Head");
+        this.playerCamera = this.FindGameObject(this.head, "Main Camera");
+        this.groundChecker = this.FindGameObject(this.gameObject, "GroundChecker");
         this.leftStick = this.transform.Find("LeftStick").GetComponent<VirtualStick>();
         this.rightStick = this.transform.Find("RightStick").GetComponent<VirtualStick>();
         this.isJumpReady = false;
     }
-	
-	// Update is called once per frame
-	void Update () {
-        this.isJumpReady = this.groundChecker.GetComponent<GroundChecker>().IsTouchingGround();
+
+    private GameObject FindGameObject(GameObject parent, string objectName)
+    {
+        GameObject objectToFind = null;
+        Transform objectToFindTransfrom = parent.transform.Find(objectName);
+
+        if (objectToFindTransfrom != null)
+        {
+            objectToFind = objectToFindTransfrom.gameObject;
+        }
+        else
+        {
+            Debug.Log("Not able to find GameObject " + objectName);
+        }
+
+        return objectToFind;
+    }
+
+    // Update is called once per frame
+    void Update () {
+        if(this.groundChecker != null)
+        {
+            this.isJumpReady = this.groundChecker.GetComponent<GroundChecker>().IsTouchingGround();
+        }
 
         if(Input.GetKeyDown(KeyCode.Space) && this.isJumpReady)
         {
@@ -32,16 +53,24 @@ public class PlayerMovement : MonoBehaviour {
             this.isJumpReady = false;
         }
 
+#if UNITY_EDITOR || UNITY_WINDOWS
         Vector3 playerMovement = this.ControlsWASD();
         Vector3 mouseMovement = this.ControlsFreeMouse();
-        //Vector3 playerMovement = new Vector3(this.leftStick.GetCurrentStickDelta().x, 0.0f, this.leftStick.GetCurrentStickDelta().y);
-        //Vector3 mouseMovement = this.rightStick.GetCurrentStickDelta(); // 
+#elif UNITY_ANDROID
+        Vector3 playerMovement = new Vector3(this.leftStick.GetCurrentStickDelta().x, 0.0f, this.leftStick.GetCurrentStickDelta().y);
+        Vector3 mouseMovement = this.rightStick.GetCurrentStickDelta();
+#endif
 
         // Movement in space.
         playerMovement.x = playerMovement.x * this.movementSpeed * Time.deltaTime;
         playerMovement.z = playerMovement.z * this.movementSpeed * Time.deltaTime;
         //this.transform.Translate(playerMovement);
-        this.GetComponent<Rigidbody>().AddRelativeForce(playerMovement, ForceMode.VelocityChange);
+
+        Rigidbody rigidBody = this.GetComponent<Rigidbody>();
+        if (rigidBody.velocity.magnitude < this.maxMovementSpeed)
+        {
+            rigidBody.AddRelativeForce(playerMovement, ForceMode.VelocityChange);
+        }
 
         // Camera movement.
         this.transform.Rotate(Vector3.up, mouseMovement.x * cameraSpeedX * Time.deltaTime);
